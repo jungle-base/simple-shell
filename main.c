@@ -2,72 +2,32 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/wait.h>
-#include "parser.h"
-#include "utils.h"
 
-#define BUFSIZE 1024
+#include "shell.h"
 
-/**
- * main - The entry point of the shell.
- *
- * Return: Always program exit status.
- */
-int main(void)
+int main(int argc, char **argv)
 {
-  char *input = NULL;
-  size_t len = 0;
-  Command *cmd;
-  char *path;
-  int pid, status;
-  char *dirs;
-  char *saveptr;
-  char *dir;
-  char buf[BUFSIZE];
+  Shell shell;
+  
+  init_shell(&shell);
 
-  while (1)
+  if (argc > 2)
   {
-    printf("$ ");
-    if (getline(&input, &len, stdin) == -1) 
-    {
-      printf("\n");
-      break;
-    }
-    input[strlen(input) - 1] = '\0';
-    cmd = parse_input(input);
-    if (cmd->argc == 1 && strcmp(cmd->argv[0], "exit") == 0)
-    {
-      break;
-    }
+    fprintf(stderr, "Usage: %s [file]\n", argv[0]);
+    return 1;
     
-    pid = fork();
-    if (pid == 0)
-    {
-      path = getenv("PATH");
-      dirs = strdup(path);
-      
-      for (dir = strtok_r(dirs, ":", &saveptr); dir; dir = strtok_r(NULL, ":", &saveptr))
-      {
-        snprintf(buf, BUFSIZE, "%s/%s", dir, cmd->argv[0]);
-        execve(buf, cmd->argv, NULL);
-      }
-      free(dirs);
-      perror("execve");
-      exit(1);
-    }
-    else if (pid > 0)
-    {
-      wait(&status);
-    }
-    else
-    {
-      perror("fork");
-    }
-    free_command(cmd);
   }
-
-  free(input);
-  return 0;
+  else if (argc == 2)
+  {
+    return run_file_input(argv[1]);
+  }
+  else
+  {
+    return run_interactive_mode();
+  }
+  free_shell(&shell);
+  return (EXIT_SUCCESS);
 }
+
 
 

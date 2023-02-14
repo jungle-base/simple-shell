@@ -1,37 +1,43 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
-#include "parser.h"
+#include <unistd.h>
+#include "alias.h"
+#include "builtin.h"
+#include "utils.h"
 
-/**
- * free_command - Frees a Command structure.
- * @cmd: The Command structure to free.
- */
-void free_command(Command *cmd)
-{
-  int i;
-
-  if (!cmd)
-    return;
-
-  for (i = 0; i < cmd->argc; i++)
-    free(cmd->argv[i]);
-  free(cmd->argv);
-  free(cmd);
+char *get_command(char *cmd) {
+    char *command = strtok(cmd, " \t\n");
+    return command;
 }
 
-/**
- * print_command - Prints a Command structure.
- * @cmd: The Command structure to print.
- */
-void print_command(const Command *cmd)
-{
-  int i;
-
-  if (!cmd)
-    return;
-
-  for (i = 0; i < cmd->argc; i++)
-    printf("%s ", cmd->argv[i]);
-  printf("\n");
+int run_builtin(char *command, char **argv) {
+  if (strcmp(command, "exit") == 0) {
+    builtin_exit(argv);
+    return 0;
+  } else if (strcmp(command, "env") == 0) {
+    builtin_env();
+    return 0;
+  } else if (strcmp(command, "setenv") == 0) {
+    builtin_setenv(argv);
+    return 0;
+  } else if (strcmp(command, "unsetenv") == 0) {
+    builtin_unsetenv(argv);
+    return 0;
+  } else if (strcmp(command, "cd") == 0) {
+    builtin_cd(argv);
+    return 0;
+  } else if (strcmp(command, "alias") == 0) {
+    return builtin_alias(argv);
+  }
+  return -1;
 }
 
+void free_argv(char **argv) {
+  int i = 0;
+  while (argv[i]) {
+    free(argv[i]);
+    i++;
+  }
+  free(argv);
+}
